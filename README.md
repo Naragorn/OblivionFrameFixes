@@ -69,11 +69,15 @@ them in system memory.
   for the whole game. This plugin changes only the frame's length, one level
   below that, so the two can be used together; the plugin's precise length
   wins for the frame, and theirs still serves the game's other timers.
-- Measured so far in VR under Proton with DXVK (the people-heavy opening
-  scene: the frame's scene render 20 % faster with the fast copy, the engine's
-  clock reading 13 or 14 ms at 75 Hz before the fix and 13.33 after). Flat
-  numbers and the Windows tick are still to be measured; `FrameClockTrace=1`
-  shows the second one on your machine.
+- Measured so far in VR under Proton with DXVK, in the people-heavy opening
+  scene: the scene render a fifth to a quarter faster with the fast copy
+  (3.22 ms before, 2.37 to 2.57 ms with it and the dxvk.conf line); the engine's clock
+  reading 13 or 14 ms at 75 Hz before the fix and 13.33 after; and with
+  `StreamCopyCheck=1` 522,000 vertex copies compared with the game's own,
+  0 differences (2026-10-23, this DLL beside OBVR, which stepped aside at
+  both spots as described above). Flat numbers and the Windows tick are
+  still to be measured; `FrameClockTrace=1` shows the second one on your
+  machine.
 
 ## Building
 
