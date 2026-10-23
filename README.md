@@ -75,9 +75,11 @@ them in system memory.
   reading 13 or 14 ms at 75 Hz before the fix and 13.33 after; and with
   `StreamCopyCheck=1` 522,000 vertex copies compared with the game's own,
   0 differences (2026-10-23, this DLL beside OBVR, which stepped aside at
-  both spots as described above). Flat numbers and the Windows tick are
-  still to be measured; `FrameClockTrace=1` shows the second one on your
-  machine.
+  both spots as described above). With one world render a frame, as on a
+  monitor, and five people in view the frame's work fell from 5.43 to
+  5.06 ms, the copy itself from about 1.2 to 0.7 ms. The Windows tick is
+  still to be measured; `FrameClockTrace=1` shows it on your machine.
+  Display Tweaks was loaded in the test game throughout, without a conflict.
 
 ## Building
 
