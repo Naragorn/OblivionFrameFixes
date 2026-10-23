@@ -1,0 +1,64 @@
+# OblivionFrameFixes.dll installed NEXT TO OBVR.dll: the plugin patches the
+# frame clock and the stream copy at its load, so OBVR, which patches at its
+# camera install, finds the two entries changed and steps aside - the
+# coexistence the READMEs promise. The scene is OBVR's perf-dungeon-five
+# (the opening's cast in the prison cell), capture and sampler on so the pass
+# time can be compared with OBVR's own runs. The plugin's INI decides the
+# rest: StreamCopyCheck=1 compares every copy with the engine's (its log
+# OblivionFrameFixes.log in the game folder: "check - N copies compared, 0
+# mismatches"), FrameClockTrace=1 writes the clock's lines there.
+# Run from the OBVR folder with its harness:
+#   python3 tools/hand-script-run.py ../OblivionFrameFixes/tools/hand-scripts/frame-fixes-check.txt --run-timeout 420 --headless --artifact-root ../OblivionFrameFixes/artifacts
+
+ini Hands Enabled=1
+ini Hands ReachOpens=0
+ini Render Stereo=dual
+ini Performance Enabled=1
+ini Performance GpuTiming=0
+ini Performance StartAfterSeconds=100
+ini Performance CaptureSeconds=45
+ini Performance MaxRecords=262144
+ini Performance Sampler=1
+console-at placed coc ImperialDungeon01
+console-at prison tcl
+console-at prison player.setrestrained 1
+console-at prison SetNumericINISetting "fVanityModeAutoDelay:Camera" 100000
+console-at people player.placeatme 00023F2A 1
+console-at people player.placeatme 00023F2B 1
+console-at people player.placeatme 0002349F 1
+console-at people player.placeatme 00023F2E 1
+console-at people player.placeatme 00025200 1
+console-at people-placed tai
+
+expect HandScript: finished
+expect Performance: capture armed, it starts in 100 seconds
+expect Performance: capture 1 started
+expect Performance: export
+expect Frame clock: the time update's entry at 0047D170 differs
+expect Stream copy: the routine's entry at 0076E610 differs
+reject Frame clock: precise
+reject Stream copy: fast
+reject menu Container
+reject HandScript: WARNING
+
+wait 12
+mark ready
+wait 22
+mark placed
+wait 16
+mark prison
+wait 30
+mark empty-watched
+mark people
+wait 8
+mark people-placed
+wait 15
+mark people-15
+wait 15
+mark people-30
+wait 15
+mark people-45
+wait 15
+mark people-watched
+wait 45
+mark done
