@@ -4,6 +4,7 @@
 #include "FrameClock.h"
 #include "PluginEntry.h"
 #include "StreamCopy.h"
+#include "VarLookup.h"
 
 #include <windows.h>
 
@@ -67,9 +68,13 @@ bool ReadSettings(framefixes::Settings* settings) {
 	settings->fastStreamCopy = GetPrivateProfileIntA("Main", "FastStreamCopy", 1, path) != 0;
 	settings->frameClockTrace = GetPrivateProfileIntA("Diagnostics", "FrameClockTrace", 0, path) != 0;
 	settings->streamCopyCheck = GetPrivateProfileIntA("Diagnostics", "StreamCopyCheck", 0, path) != 0;
-	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FrameClockTrace=%d StreamCopyCheck=%d", path,
-	    settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0, settings->frameClockTrace ? 1 : 0,
-	    settings->streamCopyCheck ? 1 : 0);
+	settings->fastVariableLookup = GetPrivateProfileIntA("Main", "FastVariableLookup", 1, path) != 0;
+	settings->variableLookupCheck = GetPrivateProfileIntA("Diagnostics", "VariableLookupCheck", 0, path) != 0;
+	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FrameClockTrace=%d "
+	    "StreamCopyCheck=%d VariableLookupCheck=%d",
+	    path, settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0,
+	    settings->fastVariableLookup ? 1 : 0, settings->frameClockTrace ? 1 : 0, settings->streamCopyCheck ? 1 : 0,
+	    settings->variableLookupCheck ? 1 : 0);
 	return true;
 }
 
@@ -81,8 +86,12 @@ bool InstallStreamCopySideEffect(bool check) {
 	return framefixes::InstallStreamCopy(check, &Log);
 }
 
+bool InstallVarLookupSideEffect(bool check) {
+	return framefixes::InstallVarLookup(check, &Log);
+}
+
 const framefixes::Host kHost{&ResetLog, &Log, &ReadSettings, &InstallFrameClockSideEffect,
-                             &InstallStreamCopySideEffect};
+                             &InstallStreamCopySideEffect, &InstallVarLookupSideEffect};
 
 }  // namespace
 

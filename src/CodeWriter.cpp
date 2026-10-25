@@ -86,6 +86,20 @@ void CodeWriter::PushEcx() {
 void CodeWriter::PushEax() { Byte(0x50); }
 void CodeWriter::PushEdx() { Byte(0x52); }
 
+void CodeWriter::MoveZeroExtendEcxFromEbpWord(UInt8 offset) {
+	// 0f b7 4d <offset>
+	Byte(0x0F);
+	Byte(0xB7);
+	Byte(0x4D);
+	Byte(offset);
+}
+
+void CodeWriter::MoveEdxFromEax() {
+	// 8b d0
+	Byte(0x8B);
+	Byte(0xD0);
+}
+
 void CodeWriter::MoveEcxFromStack(UInt8 offset) {
 	// 8b 4c 24 <offset>
 	Byte(0x8B);

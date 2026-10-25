@@ -16,10 +16,10 @@ add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
 add_library(logic INTERFACE)
 target_include_directories(logic INTERFACE src)
 
-add_library(detour STATIC src/CodeWriter.cpp src/EntryDetour.cpp)
+add_library(detour STATIC src/CodeWriter.cpp src/EntryDetour.cpp src/VarLookupStub.cpp)
 target_include_directories(detour PUBLIC src)
 
-add_library(patches STATIC src/Memory.cpp src/FrameClock.cpp src/StreamCopy.cpp)
+add_library(patches STATIC src/Memory.cpp src/FrameClock.cpp src/StreamCopy.cpp src/VarLookup.cpp)
 target_include_directories(patches PUBLIC src)
 target_link_libraries(patches PUBLIC detour)
 
@@ -42,6 +42,14 @@ add_test(NAME StreamCopyTest COMMAND StreamCopyTest)
 add_executable(EntryDetourTest tests/EntryDetourTest.cpp)
 target_link_libraries(EntryDetourTest PRIVATE detour)
 add_test(NAME EntryDetourTest COMMAND EntryDetourTest)
+
+add_executable(VarLookupTest tests/VarLookupTest.cpp)
+target_link_libraries(VarLookupTest PRIVATE logic)
+add_test(NAME VarLookupTest COMMAND VarLookupTest)
+
+add_executable(VarLookupStubTest tests/VarLookupStubTest.cpp)
+target_link_libraries(VarLookupStubTest PRIVATE detour)
+add_test(NAME VarLookupStubTest COMMAND VarLookupStubTest)
 
 add_executable(PluginEntryTest tests/PluginEntryTest.cpp)
 target_link_libraries(PluginEntryTest PRIVATE plugin_entry)

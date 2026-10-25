@@ -28,3 +28,13 @@ add_executable(EntryDetourTest EntryDetourTest.cpp ../src/CodeWriter.cpp ../src/
 target_include_directories(EntryDetourTest PRIVATE ../src)
 target_compile_options(EntryDetourTest PRIVATE -Wall -Wextra)
 add_test(NAME EntryDetourTest COMMAND EntryDetourTest)
+
+add_executable(VarLookupTest VarLookupTest.cpp)
+target_include_directories(VarLookupTest PRIVATE ../src)
+target_compile_options(VarLookupTest PRIVATE -Wall -Wextra)
+add_test(NAME VarLookupTest COMMAND VarLookupTest)
+
+add_executable(VarLookupStubTest VarLookupStubTest.cpp ../src/CodeWriter.cpp ../src/EntryDetour.cpp ../src/VarLookupStub.cpp)
+target_include_directories(VarLookupStubTest PRIVATE ../src)
+target_compile_options(VarLookupStubTest PRIVATE -Wall -Wextra)
+add_test(NAME VarLookupStubTest COMMAND VarLookupStubTest)

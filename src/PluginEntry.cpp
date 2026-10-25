@@ -30,7 +30,8 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 	}
 	g_settings = Settings{};
 	if (!host.readSettings(&g_settings)) {
-		host.log("No OblivionFrameFixes.ini next to the DLL - defaults: PreciseFrameClock=1 FastStreamCopy=1");
+		host.log("No OblivionFrameFixes.ini next to the DLL - defaults: PreciseFrameClock=1 FastStreamCopy=1 "
+		         "FastVariableLookup=1");
 	}
 	if (g_settings.preciseFrameClock) {
 		host.installFrameClock(g_settings.frameClockTrace);
@@ -41,6 +42,11 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 		host.installStreamCopy(g_settings.streamCopyCheck);
 	} else {
 		host.log("Stream copy: the engine's (FastStreamCopy=0)");
+	}
+	if (g_settings.fastVariableLookup) {
+		host.installVarLookup(g_settings.variableLookupCheck);
+	} else {
+		host.log("Variable lookup: xOBSE's walk (FastVariableLookup=0)");
 	}
 	return true;
 }

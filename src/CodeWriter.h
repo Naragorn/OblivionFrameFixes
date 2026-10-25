@@ -58,6 +58,12 @@ public:
 	// sub esp, amount
 	void SubStackPointer(UInt8 amount);
 
+	// movzx ecx, word ptr [ebp + offset] - a 16-bit argument or local.
+	void MoveZeroExtendEcxFromEbpWord(UInt8 offset);
+
+	// mov edx, eax - a callback's result where the patched code expects it.
+	void MoveEdxFromEax();
+
 	// xor ecx, ecx
 	void ClearEcx();
 

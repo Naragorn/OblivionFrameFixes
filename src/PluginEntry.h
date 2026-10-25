@@ -27,7 +27,7 @@ constexpr const char* kPluginName = "OblivionFrameFixes";
 constexpr uint32_t kPluginVersion = 1;
 constexpr uint32_t kInfoVersion = 3;
 
-// obse_common/obse_version.h: MAKE_OBLIVION_VERSION(1, 2, 416). Both patches
+// obse_common/obse_version.h: MAKE_OBLIVION_VERSION(1, 2, 416). The patches
 // sit at addresses of this build and are made on no other.
 constexpr uint32_t kOblivionVersion_1_2_416 = 0x010201A0;
 
@@ -35,9 +35,11 @@ struct Settings {
 	// [Main]
 	bool preciseFrameClock = true;
 	bool fastStreamCopy = true;
+	bool fastVariableLookup = true;
 	// [Diagnostics]
 	bool frameClockTrace = false;
 	bool streamCopyCheck = false;
+	bool variableLookupCheck = false;
 };
 
 struct Host {
@@ -46,9 +48,10 @@ struct Host {
 	// Reads the INI next to the DLL into *settings; false if there is no INI
 	// (the defaults then stand).
 	bool (*readSettings)(Settings* settings);
-	// The two patches; each returns whether it was made.
+	// The patches; each returns whether it was made.
 	bool (*installFrameClock)(bool trace);
 	bool (*installStreamCopy)(bool check);
+	bool (*installVarLookup)(bool check);
 };
 
 bool Query(const ExtenderInterfaceHead& xse, PluginInfo* info, const Host& host);
