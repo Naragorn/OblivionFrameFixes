@@ -40,6 +40,7 @@ struct Settings {
 	bool frameClockTrace = false;
 	bool streamCopyCheck = false;
 	bool variableLookupCheck = false;
+	bool engineVariableTrace = false;
 };
 
 struct Host {
@@ -52,6 +53,8 @@ struct Host {
 	bool (*installFrameClock)(bool trace);
 	bool (*installStreamCopy)(bool check);
 	bool (*installVarLookup)(bool check);
+	// A diagnostic, not a fix: the engine's own variable lookup timed.
+	bool (*installEngineVarTrace)();
 };
 
 bool Query(const ExtenderInterfaceHead& xse, PluginInfo* info, const Host& host);

@@ -38,3 +38,8 @@ add_executable(VarLookupStubTest VarLookupStubTest.cpp ../src/CodeWriter.cpp ../
 target_include_directories(VarLookupStubTest PRIVATE ../src)
 target_compile_options(VarLookupStubTest PRIVATE -Wall -Wextra)
 add_test(NAME VarLookupStubTest COMMAND VarLookupStubTest)
+
+add_executable(EngineVarTraceTest EngineVarTraceTest.cpp)
+target_include_directories(EngineVarTraceTest PRIVATE ../src)
+target_compile_options(EngineVarTraceTest PRIVATE -Wall -Wextra)
+add_test(NAME EngineVarTraceTest COMMAND EngineVarTraceTest)

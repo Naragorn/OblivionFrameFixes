@@ -48,6 +48,9 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 	} else {
 		host.log("Variable lookup: xOBSE's walk (FastVariableLookup=0)");
 	}
+	if (g_settings.engineVariableTrace) {
+		host.installEngineVarTrace();
+	}
 	return true;
 }
 

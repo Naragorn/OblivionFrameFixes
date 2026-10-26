@@ -1,6 +1,7 @@
 // The DLL's exports and real side effects; the decisions live in PluginEntry,
 // FrameClock and StreamCopy.
 
+#include "EngineVarTrace.h"
 #include "FrameClock.h"
 #include "PluginEntry.h"
 #include "StreamCopy.h"
@@ -70,11 +71,12 @@ bool ReadSettings(framefixes::Settings* settings) {
 	settings->streamCopyCheck = GetPrivateProfileIntA("Diagnostics", "StreamCopyCheck", 0, path) != 0;
 	settings->fastVariableLookup = GetPrivateProfileIntA("Main", "FastVariableLookup", 1, path) != 0;
 	settings->variableLookupCheck = GetPrivateProfileIntA("Diagnostics", "VariableLookupCheck", 0, path) != 0;
+	settings->engineVariableTrace = GetPrivateProfileIntA("Diagnostics", "EngineVariableTrace", 0, path) != 0;
 	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FrameClockTrace=%d "
-	    "StreamCopyCheck=%d VariableLookupCheck=%d",
+	    "StreamCopyCheck=%d VariableLookupCheck=%d EngineVariableTrace=%d",
 	    path, settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0,
 	    settings->fastVariableLookup ? 1 : 0, settings->frameClockTrace ? 1 : 0, settings->streamCopyCheck ? 1 : 0,
-	    settings->variableLookupCheck ? 1 : 0);
+	    settings->variableLookupCheck ? 1 : 0, settings->engineVariableTrace ? 1 : 0);
 	return true;
 }
 
@@ -90,8 +92,17 @@ bool InstallVarLookupSideEffect(bool check) {
 	return framefixes::InstallVarLookup(check, &Log);
 }
 
-const framefixes::Host kHost{&ResetLog, &Log, &ReadSettings, &InstallFrameClockSideEffect,
-                             &InstallStreamCopySideEffect, &InstallVarLookupSideEffect};
+bool InstallEngineVarTraceSideEffect() {
+	return framefixes::InstallEngineVarTrace(&Log);
+}
+
+const framefixes::Host kHost{&ResetLog,
+                             &Log,
+                             &ReadSettings,
+                             &InstallFrameClockSideEffect,
+                             &InstallStreamCopySideEffect,
+                             &InstallVarLookupSideEffect,
+                             &InstallEngineVarTraceSideEffect};
 
 }  // namespace
 

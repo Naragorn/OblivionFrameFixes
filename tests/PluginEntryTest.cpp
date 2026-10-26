@@ -28,6 +28,7 @@ struct Fake {
 	bool copyCheck = false;
 	int lookupInstalls = 0;
 	bool lookupCheck = false;
+	int traceInstalls = 0;
 	std::vector<std::string> lines;
 
 	bool Logged(const char* text) const {
@@ -74,8 +75,13 @@ bool FakeInstallLookup(bool check) {
 	return true;
 }
 
+bool FakeInstallTrace() {
+	++g_fake->traceInstalls;
+	return true;
+}
+
 const framefixes::Host kHost{&FakeReset, &FakeLog, &FakeReadSettings, &FakeInstallClock, &FakeInstallCopy,
-                             &FakeInstallLookup};
+                             &FakeInstallLookup, &FakeInstallTrace};
 
 framefixes::ExtenderInterfaceHead Game() {
 	return framefixes::ExtenderInterfaceHead{22, framefixes::kOblivionVersion_1_2_416, 0, 0};
@@ -105,6 +111,7 @@ void TestLoadDefaults() {
 	Check(fake.copyInstalls == 1 && !fake.copyCheck, "the stream copy is installed without the check");
 	Check(fake.lookupInstalls == 1 && !fake.lookupCheck, "the variable lookup is installed without the check");
 	Check(fake.Logged("FastVariableLookup=1"), "the defaults name the variable lookup");
+	Check(fake.traceInstalls == 0, "the engine variable trace is off by default");
 }
 
 void TestLoadSettings() {
@@ -113,24 +120,28 @@ void TestLoadSettings() {
 	fake.iniSettings.frameClockTrace = true;
 	fake.iniSettings.streamCopyCheck = true;
 	fake.iniSettings.variableLookupCheck = true;
+	fake.iniSettings.engineVariableTrace = true;
 	g_fake = &fake;
 	framefixes::ResetForTest();
 	framefixes::Load(Game(), kHost);
 	Check(fake.clockInstalls == 1 && fake.clockTrace, "the trace reaches the frame clock");
 	Check(fake.copyInstalls == 1 && fake.copyCheck, "the check reaches the stream copy");
 	Check(fake.lookupInstalls == 1 && fake.lookupCheck, "the check reaches the variable lookup");
+	Check(fake.traceInstalls == 1, "EngineVariableTrace=1 installs the engine variable trace");
 	Check(framefixes::LoadedSettings().frameClockTrace, "the settings are kept");
 
 	Fake off;
 	off.iniSettings.preciseFrameClock = false;
 	off.iniSettings.fastStreamCopy = false;
 	off.iniSettings.fastVariableLookup = false;
+	off.iniSettings.engineVariableTrace = true;
 	g_fake = &off;
 	framefixes::ResetForTest();
 	framefixes::Load(Game(), kHost);
 	Check(off.clockInstalls == 0 && off.Logged("PreciseFrameClock=0"), "PreciseFrameClock=0: not installed, said");
 	Check(off.copyInstalls == 0 && off.Logged("FastStreamCopy=0"), "FastStreamCopy=0: not installed, said");
 	Check(off.lookupInstalls == 0 && off.Logged("FastVariableLookup=0"), "FastVariableLookup=0: not installed, said");
+	Check(off.traceInstalls == 1, "the trace stands on its own, with every fix off");
 
 	Fake one;
 	one.iniSettings.fastStreamCopy = false;
@@ -148,7 +159,7 @@ void TestLoadRefusals() {
 	framefixes::ExtenderInterfaceHead xse = Game();
 	xse.isEditor = 1;
 	Check(framefixes::Load(xse, kHost) && editor.clockInstalls == 0 && editor.copyInstalls == 0 &&
-	          editor.lookupInstalls == 0 && editor.Logged("Editor"),
+	          editor.lookupInstalls == 0 && editor.traceInstalls == 0 && editor.Logged("Editor"),
 	      "the editor gets nothing");
 
 	Fake other;
@@ -157,7 +168,7 @@ void TestLoadRefusals() {
 	xse = Game();
 	xse.oblivionVersion = 0x010201A1;
 	Check(framefixes::Load(xse, kHost) && other.clockInstalls == 0 && other.copyInstalls == 0 &&
-	          other.lookupInstalls == 0 && other.Logged("is not 1.2.416"),
+	          other.lookupInstalls == 0 && other.traceInstalls == 0 && other.Logged("is not 1.2.416"),
 	      "another game version gets nothing, and the log says which");
 }
 
