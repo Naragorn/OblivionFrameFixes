@@ -36,12 +36,10 @@ struct Settings {
 	bool preciseFrameClock = true;
 	bool fastStreamCopy = true;
 	bool fastVariableLookup = true;
-	bool fastEventListCast = true;
 	// [Diagnostics]
 	bool frameClockTrace = false;
 	bool streamCopyCheck = false;
 	bool variableLookupCheck = false;
-	bool eventListCastCheck = false;
 };
 
 struct Host {
@@ -54,7 +52,6 @@ struct Host {
 	bool (*installFrameClock)(bool trace);
 	bool (*installStreamCopy)(bool check);
 	bool (*installVarLookup)(bool check);
-	bool (*installCastCache)(bool check);
 };
 
 bool Query(const ExtenderInterfaceHead& xse, PluginInfo* info, const Host& host);
