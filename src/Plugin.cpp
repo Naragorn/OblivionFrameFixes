@@ -1,6 +1,7 @@
 // The DLL's exports and real side effects; the decisions live in PluginEntry,
 // FrameClock and StreamCopy.
 
+#include "CastCache.h"
 #include "FrameClock.h"
 #include "PluginEntry.h"
 #include "StreamCopy.h"
@@ -70,11 +71,14 @@ bool ReadSettings(framefixes::Settings* settings) {
 	settings->streamCopyCheck = GetPrivateProfileIntA("Diagnostics", "StreamCopyCheck", 0, path) != 0;
 	settings->fastVariableLookup = GetPrivateProfileIntA("Main", "FastVariableLookup", 1, path) != 0;
 	settings->variableLookupCheck = GetPrivateProfileIntA("Diagnostics", "VariableLookupCheck", 0, path) != 0;
-	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FrameClockTrace=%d "
-	    "StreamCopyCheck=%d VariableLookupCheck=%d",
+	settings->fastEventListCast = GetPrivateProfileIntA("Main", "FastEventListCast", 1, path) != 0;
+	settings->eventListCastCheck = GetPrivateProfileIntA("Diagnostics", "EventListCastCheck", 0, path) != 0;
+	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FastEventListCast=%d "
+	    "FrameClockTrace=%d StreamCopyCheck=%d VariableLookupCheck=%d EventListCastCheck=%d",
 	    path, settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0,
-	    settings->fastVariableLookup ? 1 : 0, settings->frameClockTrace ? 1 : 0, settings->streamCopyCheck ? 1 : 0,
-	    settings->variableLookupCheck ? 1 : 0);
+	    settings->fastVariableLookup ? 1 : 0, settings->fastEventListCast ? 1 : 0, settings->frameClockTrace ? 1 : 0,
+	    settings->streamCopyCheck ? 1 : 0, settings->variableLookupCheck ? 1 : 0,
+	    settings->eventListCastCheck ? 1 : 0);
 	return true;
 }
 
@@ -90,8 +94,17 @@ bool InstallVarLookupSideEffect(bool check) {
 	return framefixes::InstallVarLookup(check, &Log);
 }
 
-const framefixes::Host kHost{&ResetLog, &Log, &ReadSettings, &InstallFrameClockSideEffect,
-                             &InstallStreamCopySideEffect, &InstallVarLookupSideEffect};
+bool InstallCastCacheSideEffect(bool check) {
+	return framefixes::InstallCastCache(check, &Log);
+}
+
+const framefixes::Host kHost{&ResetLog,
+                             &Log,
+                             &ReadSettings,
+                             &InstallFrameClockSideEffect,
+                             &InstallStreamCopySideEffect,
+                             &InstallVarLookupSideEffect,
+                             &InstallCastCacheSideEffect};
 
 }  // namespace
 

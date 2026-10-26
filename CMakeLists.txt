@@ -19,7 +19,7 @@ target_include_directories(logic INTERFACE src)
 add_library(detour STATIC src/CodeWriter.cpp src/EntryDetour.cpp src/VarLookupStub.cpp)
 target_include_directories(detour PUBLIC src)
 
-add_library(patches STATIC src/Memory.cpp src/FrameClock.cpp src/StreamCopy.cpp src/VarLookup.cpp)
+add_library(patches STATIC src/Memory.cpp src/FrameClock.cpp src/StreamCopy.cpp src/VarLookup.cpp src/CastCache.cpp)
 target_include_directories(patches PUBLIC src)
 target_link_libraries(patches PUBLIC detour)
 
@@ -54,3 +54,7 @@ add_test(NAME VarLookupStubTest COMMAND VarLookupStubTest)
 add_executable(PluginEntryTest tests/PluginEntryTest.cpp)
 target_link_libraries(PluginEntryTest PRIVATE plugin_entry)
 add_test(NAME PluginEntryTest COMMAND PluginEntryTest)
+
+add_executable(CastCacheTest tests/CastCacheTest.cpp)
+target_link_libraries(CastCacheTest PRIVATE logic)
+add_test(NAME CastCacheTest COMMAND CastCacheTest)

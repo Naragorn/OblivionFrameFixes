@@ -38,3 +38,8 @@ add_executable(VarLookupStubTest VarLookupStubTest.cpp ../src/CodeWriter.cpp ../
 target_include_directories(VarLookupStubTest PRIVATE ../src)
 target_compile_options(VarLookupStubTest PRIVATE -Wall -Wextra)
 add_test(NAME VarLookupStubTest COMMAND VarLookupStubTest)
+
+add_executable(CastCacheTest CastCacheTest.cpp)
+target_include_directories(CastCacheTest PRIVATE ../src)
+target_compile_options(CastCacheTest PRIVATE -Wall -Wextra)
+add_test(NAME CastCacheTest COMMAND CastCacheTest)
