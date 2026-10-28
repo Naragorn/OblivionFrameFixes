@@ -2,7 +2,9 @@
 // FrameClock and StreamCopy.
 
 #include "EngineVarTrace.h"
+#include "CastCache.h"
 #include "FrameClock.h"
+#include "Gains.h"
 #include "PluginEntry.h"
 #include "StreamCopy.h"
 #include "VarLookup.h"
@@ -72,11 +74,20 @@ bool ReadSettings(framefixes::Settings* settings) {
 	settings->fastVariableLookup = GetPrivateProfileIntA("Main", "FastVariableLookup", 1, path) != 0;
 	settings->variableLookupCheck = GetPrivateProfileIntA("Diagnostics", "VariableLookupCheck", 0, path) != 0;
 	settings->engineVariableTrace = GetPrivateProfileIntA("Diagnostics", "EngineVariableTrace", 0, path) != 0;
-	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FrameClockTrace=%d "
-	    "StreamCopyCheck=%d VariableLookupCheck=%d EngineVariableTrace=%d",
+	settings->reportGains = GetPrivateProfileIntA("Main", "ReportGains", 1, path) != 0;
+	settings->gainsSeconds =
+		static_cast<float>(GetPrivateProfileIntA("Diagnostics", "GainsSeconds", 300, path));
+	framefixes::SetReportGains(settings->reportGains, settings->gainsSeconds);
+	settings->fastEventListCast = GetPrivateProfileIntA("Main", "FastEventListCast", 0, path) != 0;
+	settings->eventListCastCheck = GetPrivateProfileIntA("Diagnostics", "EventListCastCheck", 0, path) != 0;
+	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FastEventListCast=%d "
+	    "ReportGains=%d FrameClockTrace=%d StreamCopyCheck=%d VariableLookupCheck=%d EventListCastCheck=%d "
+	    "EngineVariableTrace=%d",
 	    path, settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0,
-	    settings->fastVariableLookup ? 1 : 0, settings->frameClockTrace ? 1 : 0, settings->streamCopyCheck ? 1 : 0,
-	    settings->variableLookupCheck ? 1 : 0, settings->engineVariableTrace ? 1 : 0);
+	    settings->fastVariableLookup ? 1 : 0, settings->fastEventListCast ? 1 : 0, settings->reportGains ? 1 : 0,
+	    settings->frameClockTrace ? 1 : 0,
+	    settings->streamCopyCheck ? 1 : 0, settings->variableLookupCheck ? 1 : 0,
+	    settings->eventListCastCheck ? 1 : 0, settings->engineVariableTrace ? 1 : 0);
 	return true;
 }
 
@@ -96,13 +107,18 @@ bool InstallEngineVarTraceSideEffect() {
 	return framefixes::InstallEngineVarTrace(&Log);
 }
 
+bool InstallCastCacheSideEffect(bool check) {
+	return framefixes::InstallCastCache(check, &Log);
+}
+
 const framefixes::Host kHost{&ResetLog,
                              &Log,
                              &ReadSettings,
                              &InstallFrameClockSideEffect,
                              &InstallStreamCopySideEffect,
                              &InstallVarLookupSideEffect,
-                             &InstallEngineVarTraceSideEffect};
+                             &InstallEngineVarTraceSideEffect,
+                             &InstallCastCacheSideEffect};
 
 }  // namespace
 

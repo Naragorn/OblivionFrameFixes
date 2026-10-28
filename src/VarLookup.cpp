@@ -3,6 +3,8 @@
 #include <windows.h>
 
 #include "EntryDetour.h"
+#include "Gains.h"
+#include "GainsLogic.h"
 #include "Memory.h"
 #include "Types.h"
 #include "VarLookupLogic.h"
@@ -34,6 +36,9 @@ UInt32 g_mismatches = 0;
 UInt32 g_mismatchLinesLeft = 8;
 UInt32 g_nextReport = 0;
 bool g_firstIndexSaid = false;
+GainSampler g_gains;
+ReportClock g_gainsClock;
+long long g_gainsStart = 0;
 
 void ReportLocked() {
 	const VarLookupStats& s = g_cache->Stats();
@@ -45,7 +50,31 @@ void ReportLocked() {
 
 EngineVar* __cdecl LookupVariable(const EngineEventList* list, UInt32 id) {
 	AcquireSRWLockExclusive(&g_lock);
+	// One lookup in 1024 answered from an index is also walked the old way,
+	// both timed (src/GainsLogic.h).
+	const bool sample = !g_check && ReportGains() && g_gains.Due();
+	const UInt32 fromIndexBefore = g_cache->Stats().fromIndex;
+	const long long t0 = sample ? GainsCounter() : 0;
 	EngineVar* found = g_cache->Find(list, id);
+	if (sample && g_cache->Stats().fromIndex != fromIndexBefore) {
+		const long long t1 = GainsCounter();
+		WalkVariables(*list, id, nullptr);
+		const long long t2 = GainsCounter();
+		g_gains.Add(t1 - t0, t2 - t1);
+	}
+	if (sample) {
+		const long long now = GainsCounter();
+		if (g_gainsStart == 0) g_gainsStart = now;
+		const long long frequency = GainsFrequency();
+		if (g_gainsClock.Due(now, frequency, GainsPeriod())) {
+			char line[400];
+			if (FormatGain(line, sizeof(line), "Variable lookup", "lookups answered from an index", g_gains,
+			               g_cache->Stats().fromIndex, frequency,
+			               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
+				g_log("%s", line);
+			}
+		}
+	}
 	if (g_check) {
 		EngineVar* walked = WalkVariables(*list, id, nullptr);
 		if (walked != found) {

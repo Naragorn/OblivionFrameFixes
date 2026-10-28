@@ -31,7 +31,7 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 	g_settings = Settings{};
 	if (!host.readSettings(&g_settings)) {
 		host.log("No OblivionFrameFixes.ini next to the DLL - defaults: PreciseFrameClock=1 FastStreamCopy=1 "
-		         "FastVariableLookup=1");
+		         "FastVariableLookup=1 FastEventListCast=0");
 	}
 	if (g_settings.preciseFrameClock) {
 		host.installFrameClock(g_settings.frameClockTrace);
@@ -50,6 +50,11 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 	}
 	if (g_settings.engineVariableTrace) {
 		host.installEngineVarTrace();
+	}
+	if (g_settings.fastEventListCast) {
+		host.installCastCache(g_settings.eventListCastCheck);
+	} else {
+		host.log("Event list cast: the game's for every token (FastEventListCast=0)");
 	}
 	return true;
 }

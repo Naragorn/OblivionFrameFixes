@@ -4,6 +4,8 @@
 
 #include "EntryDetour.h"
 #include "FrameClockLogic.h"
+#include "Gains.h"
+#include "GainsLogic.h"
 #include "Memory.h"
 #include "Types.h"
 
@@ -34,6 +36,9 @@ bool g_trace = false;
 LogFn g_log = nullptr;
 FrameClockTrace g_traceData;
 long long g_traceStarted = 0;
+ClockAccuracy g_accuracy;
+ReportClock g_gainsClock;
+long long g_gainsStart = 0;
 
 long long Counter() {
 	LARGE_INTEGER value{};
@@ -50,6 +55,19 @@ void __fastcall FrameClockUpdate(EngineTimeInfo* self, void* /*edx*/, UInt32 tic
 		given = PreciseFrameSeconds(now - g_previous, g_frequency,
 		                            *reinterpret_cast<const float*>(kTimeMultiplier));
 		self->frameSeconds = given;
+		if (ReportGains()) {
+			// What the game's own clock would have given this frame, against
+			// its real length (src/GainsLogic.h).
+			g_accuracy.Add(engineSeconds, given);
+			if (g_gainsStart == 0) g_gainsStart = now;
+			if (g_gainsClock.Due(now, g_frequency, GainsPeriod())) {
+				char line[400];
+				if (FormatClockAccuracy(line, sizeof(line), g_accuracy,
+				                        static_cast<double>(now - g_gainsStart) / g_frequency / 60.0)) {
+					g_log("%s", line);
+				}
+			}
+		}
 	}
 	// The previous reading moves only when a delta was taken from it, so a
 	// frozen or clamped stretch is read afterwards the way the engine reads

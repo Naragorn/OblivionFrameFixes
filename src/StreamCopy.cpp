@@ -4,6 +4,8 @@
 #include <new>
 
 #include "EntryDetour.h"
+#include "Gains.h"
+#include "GainsLogic.h"
 #include "Memory.h"
 #include "StreamCopyLogic.h"
 #include "Types.h"
@@ -67,8 +69,34 @@ UInt32 __cdecl StreamCopyChecked(const StreamCopyDesc* desc) {
 	return fastTotal;
 }
 
+GainSampler g_gains;
+ReportClock g_gainsClock;
+long long g_gainsStart = 0;
+UInt64 g_copies = 0;
+
+// One copy in 1024 is also done the engine's way first, both timed (the same
+// bytes land twice; src/GainsLogic.h). The engine's copies run on the render
+// thread alone.
 UInt32 __cdecl StreamCopyFastEntry(const StreamCopyDesc* desc) {
-	return StreamCopyFast(*desc);
+	if (!ReportGains()) return StreamCopyFast(*desc);
+	++g_copies;
+	if (!g_gains.Due()) return StreamCopyFast(*desc);
+	const long long t0 = GainsCounter();
+	g_original(desc);
+	const long long t1 = GainsCounter();
+	const UInt32 total = StreamCopyFast(*desc);
+	const long long now = GainsCounter();
+	g_gains.Add(now - t1, t1 - t0);
+	if (g_gainsStart == 0) g_gainsStart = now;
+	const long long frequency = GainsFrequency();
+	if (g_gainsClock.Due(now, frequency, GainsPeriod())) {
+		char line[400];
+		if (FormatGain(line, sizeof(line), "Stream copy", "vertex copies", g_gains, g_copies, frequency,
+		               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
+			g_log("%s", line);
+		}
+	}
+	return total;
 }
 
 }  // namespace

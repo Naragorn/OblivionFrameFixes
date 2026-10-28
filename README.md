@@ -53,6 +53,17 @@ them in system memory.
 
 - `[Main] PreciseFrameClock=1`, `FastStreamCopy=1` and `FastVariableLookup=1`
   turn the three fixes on; `0` leaves that part of the game as it is.
+- `[Main] ReportGains=1` (the default) writes, every five minutes, what each
+  fix gained on your machine into the log: "Gains: Variable lookup - about
+  ... ms saved over ... lookups", the same for the vertex copy, and how far
+  the game's own clock would have been off a frame. One call in 1024 is done
+  both ways and timed, so the saving is an estimate from those samples, not
+  the game run once with and once without the fix. `0` turns the lines off;
+  `[Diagnostics] GainsSeconds` sets how often they come.
+- `[Main] FastEventListCast=0` (off by default): xOBSE's type check for
+  "SomeQuest.someVariable" answered from memory instead of the game's class
+  walk. Correct in every check, but no frame got measurably faster in the
+  test with Maskar's Oblivion Overhaul; there if you want to try it.
 - `[Diagnostics] FrameClockTrace=1` writes a line every ten seconds with the
   frame lengths the game's own clock produced and the lengths the frames were
   given. Good for seeing the problem on your machine; off for play.
