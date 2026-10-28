@@ -110,6 +110,37 @@ inline bool FormatClockAccuracy(char* out, size_t size, const ClockAccuracy& c, 
 	return n > 0 && static_cast<size_t>(n) < size;
 }
 
+// The variable lookup's samples by how far the old walk went to its answer:
+// the index pays for a long walk and costs a little on a short one, so
+// where it starts paying is read off these (2026-10-28: on lists of about
+// 94 entries the index was 0.10 us, the walk 0.08).
+inline constexpr UInt32 kWalkBuckets = 4;
+inline UInt32 WalkBucket(UInt32 nodes) { return nodes < 64 ? 0 : nodes < 256 ? 1 : nodes < 1024 ? 2 : 3; }
+inline const char* WalkBucketName(UInt32 bucket) {
+	static const char* const names[kWalkBuckets] = {"under 64", "64 to 255", "256 to 1023", "1024 and more"};
+	return bucket < kWalkBuckets ? names[bucket] : "?";
+}
+
+struct GainBuckets {
+	GainSampler bucket[kWalkBuckets];
+	void Add(UInt32 nodes, long long fast, long long slow) { bucket[WalkBucket(nodes)].Add(fast, slow); }
+};
+
+// "Gains: Variable lookup, walks of 1024 and more entries - 12 samples, 4.00 us
+// faster a lookup (5.00 us the old way, 1.00 us now)".
+inline bool FormatBucket(char* out, size_t size, const GainBuckets& b, UInt32 which, long long frequency) {
+	if (which >= kWalkBuckets) return false;
+	const GainSampler& g = b.bucket[which];
+	if (g.samples == 0 || frequency <= 0) return false;
+	const double diff = g.SlowMicros(frequency) - g.FastMicros(frequency);
+	const int n = std::snprintf(out, size,
+	                            "Gains: Variable lookup, walks of %s entries - %u samples, %.2f us %s a lookup (%.2f us "
+	                            "the old way, %.2f us now)",
+	                            WalkBucketName(which), g.samples, diff < 0.0 ? -diff : diff,
+	                            diff < 0.0 ? "slower" : "faster", g.SlowMicros(frequency), g.FastMicros(frequency));
+	return n > 0 && static_cast<size_t>(n) < size;
+}
+
 // Due once every `periodSeconds`, the first reading starting it.
 struct ReportClock {
 	long long next = 0;

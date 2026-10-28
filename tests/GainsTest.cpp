@@ -111,6 +111,25 @@ void TestLines() {
 	Check(!FormatGain(line, 8, "Variable lookup", "lookups", g, 1000, 10000000, 5.0), "too small a buffer: refused");
 }
 
+void TestBuckets() {
+	std::printf("The variable lookup's samples by how far the old walk went\n");
+	Check(WalkBucket(0) == 0 && WalkBucket(63) == 0 && WalkBucket(64) == 1 && WalkBucket(255) == 1 &&
+	          WalkBucket(256) == 2 && WalkBucket(1023) == 2 && WalkBucket(1024) == 3 && WalkBucket(4000) == 3,
+	      "under 64 entries, 64 to 255, 256 to 1023, 1024 and more");
+	GainBuckets b;
+	b.Add(10, 2, 1);      // short: the index slower by 1 tick
+	b.Add(2000, 1, 41);   // long: 40 ticks saved
+	Check(b.bucket[0].samples == 1 && b.bucket[3].samples == 1, "each sample in its bucket");
+	char line[256];
+	Check(!FormatBucket(line, sizeof(line), b, 1, 10000000), "an empty bucket: no line");
+	Check(FormatBucket(line, sizeof(line), b, 0, 10000000) && std::strstr(line, "under 64") != nullptr &&
+	          std::strstr(line, "slower") != nullptr,
+	      "the short bucket: named, and slower");
+	Check(FormatBucket(line, sizeof(line), b, 3, 10000000) && std::strstr(line, "1024 and more") != nullptr &&
+	          std::strstr(line, "faster") != nullptr && std::strstr(line, "4.00 us") != nullptr,
+	      "the long bucket: named, faster, by 4 us a lookup");
+}
+
 void TestReportClock() {
 	std::printf("When a report is due\n");
 	ReportClock r;
@@ -129,6 +148,7 @@ int main() {
 	TestSaved();
 	TestClock();
 	TestLines();
+	TestBuckets();
 	TestReportClock();
 	if (g_failures != 0) {
 		std::printf("%d check(s) failed\n", g_failures);

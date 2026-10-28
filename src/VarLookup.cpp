@@ -37,6 +37,7 @@ UInt32 g_mismatchLinesLeft = 8;
 UInt32 g_nextReport = 0;
 bool g_firstIndexSaid = false;
 GainSampler g_gains;
+GainBuckets g_buckets;
 ReportClock g_gainsClock;
 long long g_gainsStart = 0;
 
@@ -58,9 +59,11 @@ EngineVar* __cdecl LookupVariable(const EngineEventList* list, UInt32 id) {
 	EngineVar* found = g_cache->Find(list, id);
 	if (sample && g_cache->Stats().fromIndex != fromIndexBefore) {
 		const long long t1 = GainsCounter();
-		WalkVariables(*list, id, nullptr);
+		UInt32 nodes = 0;
+		WalkVariables(*list, id, &nodes);
 		const long long t2 = GainsCounter();
 		g_gains.Add(t1 - t0, t2 - t1);
+		g_buckets.Add(nodes, t1 - t0, t2 - t1);
 	}
 	if (sample) {
 		const long long now = GainsCounter();
@@ -72,6 +75,9 @@ EngineVar* __cdecl LookupVariable(const EngineEventList* list, UInt32 id) {
 			               g_cache->Stats().fromIndex, frequency,
 			               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
 				g_log("%s", line);
+			}
+			for (UInt32 b = 0; b < kWalkBuckets; ++b) {
+				if (FormatBucket(line, sizeof(line), g_buckets, b, frequency)) g_log("%s", line);
 			}
 		}
 	}
