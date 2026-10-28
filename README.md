@@ -1,6 +1,6 @@
 # Oblivion Frame Fixes
 
-Three small fixes for Oblivion (2006) that make the game smoother, in an
+Four small fixes for Oblivion (2006) that make the game smoother, in an
 xOBSE plugin. Works flat and in VR.
 
 1. **A precise frame clock.** Oblivion measures how long a frame took with
@@ -24,6 +24,14 @@ xOBSE plugin. Works flat and in VR.
    and when it builds its world events on leaving a house the game froze for
    130 ms. The plugin remembers where each variable of a long list sits and
    answers by number. Same variables, found faster.
+
+4. **Fewer system calls when xOBSE changes the game's code.** For every
+   command a mod runs without its message (the "NS" commands), xOBSE changes
+   a few bytes of the game's code and asks Windows four to twelve times to
+   lift and restore that page's protection. Maskar's Oblivion Overhaul runs
+   32,000 such commands in the first frame after a load: 2.3 s, half of it in
+   those calls on the test machine. The plugin makes such a page writable
+   once and answers the rest itself.
 
 **Like it? Buy me a coffee on [Ko-fi](https://ko-fi.com/somadb).** (somadb is a
 different project I work on, but I confirm this Ko-fi link goes to me, the one

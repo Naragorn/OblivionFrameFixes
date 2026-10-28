@@ -52,3 +52,8 @@ add_executable(GainsTest GainsTest.cpp)
 target_include_directories(GainsTest PRIVATE ../src)
 target_compile_options(GainsTest PRIVATE -Wall -Wextra)
 add_test(NAME GainsTest COMMAND GainsTest)
+
+add_executable(ProtectTest ProtectTest.cpp)
+target_include_directories(ProtectTest PRIVATE ../src)
+target_compile_options(ProtectTest PRIVATE -Wall -Wextra)
+add_test(NAME ProtectTest COMMAND ProtectTest)

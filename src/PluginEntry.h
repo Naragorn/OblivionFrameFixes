@@ -38,7 +38,9 @@ struct Settings {
 	bool fastVariableLookup = true;
 	bool reportGains = true;  // [Main] ReportGains: the "Gains:" lines
 	float gainsSeconds = 300.0f;  // [Diagnostics] GainsSeconds: how often
-	bool fastEventListCast = false;  // opt-in: no gain measured (2026-10-26)
+	bool fastEventListCast = false;
+	bool fastCodeProtect = true;   // [Main] FastCodeProtect (ProtectLogic.h)
+	bool codeProtectCheck = false;  // opt-in: no gain measured (2026-10-26)
 	// [Diagnostics]
 	bool frameClockTrace = false;
 	bool streamCopyCheck = false;
@@ -60,6 +62,7 @@ struct Host {
 	// A diagnostic, not a fix: the engine's own variable lookup timed.
 	bool (*installEngineVarTrace)();
 	bool (*installCastCache)(bool check);
+	bool (*installCodeProtect)(bool check);
 };
 
 bool Query(const ExtenderInterfaceHead& xse, PluginInfo* info, const Host& host);

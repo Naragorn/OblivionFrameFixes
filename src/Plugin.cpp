@@ -3,6 +3,7 @@
 
 #include "EngineVarTrace.h"
 #include "CastCache.h"
+#include "FastProtect.h"
 #include "FrameClock.h"
 #include "Gains.h"
 #include "PluginEntry.h"
@@ -80,14 +81,17 @@ bool ReadSettings(framefixes::Settings* settings) {
 	framefixes::SetReportGains(settings->reportGains, settings->gainsSeconds);
 	settings->fastEventListCast = GetPrivateProfileIntA("Main", "FastEventListCast", 0, path) != 0;
 	settings->eventListCastCheck = GetPrivateProfileIntA("Diagnostics", "EventListCastCheck", 0, path) != 0;
+	settings->fastCodeProtect = GetPrivateProfileIntA("Main", "FastCodeProtect", 1, path) != 0;
+	settings->codeProtectCheck = GetPrivateProfileIntA("Diagnostics", "CodeProtectCheck", 0, path) != 0;
 	Log("Settings from %s: PreciseFrameClock=%d FastStreamCopy=%d FastVariableLookup=%d FastEventListCast=%d "
-	    "ReportGains=%d FrameClockTrace=%d StreamCopyCheck=%d VariableLookupCheck=%d EventListCastCheck=%d "
-	    "EngineVariableTrace=%d",
+	    "FastCodeProtect=%d ReportGains=%d FrameClockTrace=%d StreamCopyCheck=%d VariableLookupCheck=%d EventListCastCheck=%d "
+	    "EngineVariableTrace=%d CodeProtectCheck=%d",
 	    path, settings->preciseFrameClock ? 1 : 0, settings->fastStreamCopy ? 1 : 0,
-	    settings->fastVariableLookup ? 1 : 0, settings->fastEventListCast ? 1 : 0, settings->reportGains ? 1 : 0,
+	    settings->fastVariableLookup ? 1 : 0, settings->fastEventListCast ? 1 : 0, settings->fastCodeProtect ? 1 : 0,
+	    settings->reportGains ? 1 : 0,
 	    settings->frameClockTrace ? 1 : 0,
 	    settings->streamCopyCheck ? 1 : 0, settings->variableLookupCheck ? 1 : 0,
-	    settings->eventListCastCheck ? 1 : 0, settings->engineVariableTrace ? 1 : 0);
+	    settings->eventListCastCheck ? 1 : 0, settings->engineVariableTrace ? 1 : 0, settings->codeProtectCheck ? 1 : 0);
 	return true;
 }
 
@@ -111,6 +115,10 @@ bool InstallCastCacheSideEffect(bool check) {
 	return framefixes::InstallCastCache(check, &Log);
 }
 
+bool InstallCodeProtectSideEffect(bool check) {
+	return framefixes::InstallCodeProtect(check, &Log);
+}
+
 const framefixes::Host kHost{&ResetLog,
                              &Log,
                              &ReadSettings,
@@ -118,7 +126,8 @@ const framefixes::Host kHost{&ResetLog,
                              &InstallStreamCopySideEffect,
                              &InstallVarLookupSideEffect,
                              &InstallEngineVarTraceSideEffect,
-                             &InstallCastCacheSideEffect};
+                             &InstallCastCacheSideEffect,
+                             &InstallCodeProtectSideEffect};
 
 }  // namespace
 

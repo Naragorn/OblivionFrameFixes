@@ -20,7 +20,7 @@ add_library(detour STATIC src/CodeWriter.cpp src/EntryDetour.cpp src/VarLookupSt
 target_include_directories(detour PUBLIC src)
 
 add_library(patches STATIC src/Memory.cpp src/FrameClock.cpp src/StreamCopy.cpp src/VarLookup.cpp src/EngineVarTrace.cpp
-            src/CastCache.cpp src/Gains.cpp)
+            src/CastCache.cpp src/Gains.cpp src/FastProtect.cpp)
 target_include_directories(patches PUBLIC src)
 target_link_libraries(patches PUBLIC detour)
 
@@ -65,3 +65,6 @@ add_test(NAME CastCacheTest COMMAND CastCacheTest)
 add_executable(GainsTest tests/GainsTest.cpp)
 target_link_libraries(GainsTest PRIVATE logic)
 add_test(NAME GainsTest COMMAND GainsTest)
+add_executable(ProtectTest tests/ProtectTest.cpp)
+target_link_libraries(ProtectTest PRIVATE logic)
+add_test(NAME ProtectTest COMMAND ProtectTest)
