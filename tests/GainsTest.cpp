@@ -73,6 +73,10 @@ void TestClock() {
 	Check(Near(c.maxErrorMs, 11.11, 1e-2), "the largest error");
 	Check(c.offByOneMs == 1, "one frame off by a millisecond or more");
 	Check(Near(c.OffByOnePercent(), 100.0 / 3.0, 1e-3), "a third of the frames");
+	ClockAccuracy load;
+	load.Add(0.166f, 0.0137f);
+	load.Add(0.016f, 0.150f);
+	Check(load.frames == 0, "a load's frame (a tenth of a second or more either way) is not a frame's error");
 	ClockAccuracy nan;
 	nan.Add(std::nanf(""), 0.016f);
 	Check(nan.frames == 0, "a reading that is no number: not counted");

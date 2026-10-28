@@ -67,7 +67,11 @@ struct ClockAccuracy {
 	double maxErrorMs = 0.0;
 	UInt64 offByOneMs = 0;
 
+	// A frame of a tenth of a second or more on either clock is a load or a
+	// stall, not the clock's rounding: the game's 166 ms ceiling against the
+	// real length read 152.7 to 165 ms "off" in the first run (2026-10-28).
 	void Add(float engineSeconds, float givenSeconds) {
+		if (!(engineSeconds < 0.1f) || !(givenSeconds < 0.1f)) return;
 		const double error = std::fabs(static_cast<double>(engineSeconds) - givenSeconds) * 1000.0;
 		if (!(error == error)) return;
 		++frames;
