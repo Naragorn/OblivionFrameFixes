@@ -11,7 +11,10 @@
 // fix on and off, and the log says so. A fix that came out slower says that
 // too. The frame clock saves no time; what it gains is accuracy - how far the
 // game's own whole-millisecond clock was from the frame's real length.
-// [Main] ReportGains=1 writes a "Gains:" line for each fix every five minutes.
+// [Main] ReportGains=1 writes a "Gains:" line for each fix every five minutes,
+// and after each load and on quitting (GainsMomentOf): a session shorter than
+// the period, or the log of the next start replacing this one's, lost them all
+// (Nadi's Windows run, 2026-10-29).
 
 #include <cmath>
 #include <cstdio>
@@ -141,6 +144,25 @@ inline bool FormatBucket(char* out, size_t size, const GainBuckets& b, UInt32 wh
 	return n > 0 && static_cast<size_t>(n) < size;
 }
 
+// The xOBSE messages after which the lines are written besides the period
+// (obse/PluginAPI.h OBSEMessagingInterface: kMessage_ExitGame 1,
+// kMessage_ExitToMainMenu 2, kMessage_ExitGame_Console 7,
+// kMessage_PostLoadGame 8); what the log says the lines were written at, or
+// nullptr for any other message.
+inline constexpr UInt32 kObseExitGame = 1;
+inline constexpr UInt32 kObseExitToMainMenu = 2;
+inline constexpr UInt32 kObseExitGameConsole = 7;
+inline constexpr UInt32 kObsePostLoadGame = 8;
+inline const char* GainsMomentOf(UInt32 message) {
+	switch (message) {
+		case kObsePostLoadGame: return "after a load";
+		case kObseExitGame:
+		case kObseExitGameConsole: return "on quitting";
+		case kObseExitToMainMenu: return "on leaving for the main menu";
+		default: return nullptr;
+	}
+}
+
 // Due once every `periodSeconds`, the first reading starting it.
 struct ReportClock {
 	long long next = 0;
@@ -157,6 +179,13 @@ struct ReportClock {
 		if (now < next) return false;
 		next = now + period;
 		return true;
+	}
+
+	// The lines were just written out of turn: the next a whole period on.
+	void Restart(long long now, long long frequency, double periodSeconds) {
+		if (frequency <= 0) return;
+		started = true;
+		next = now + static_cast<long long>(periodSeconds * static_cast<double>(frequency));
 	}
 };
 

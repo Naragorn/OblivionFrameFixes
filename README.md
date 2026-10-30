@@ -61,8 +61,9 @@ them in system memory.
 
 - `[Main] PreciseFrameClock=1`, `FastStreamCopy=1` and `FastVariableLookup=1`
   turn the three fixes on; `0` leaves that part of the game as it is.
-- `[Main] ReportGains=1` (the default) writes, every five minutes, what each
-  fix gained on your machine into the log: "Gains: Variable lookup - about
+- `[Main] ReportGains=1` (the default) writes, every five minutes, after
+  each load and when you quit, what each fix gained on your machine into the
+  log: "Gains: Variable lookup - about
   ... ms saved over ... lookups", the same for the vertex copy, and how far
   the game's own clock would have been off a frame. One call in 1024 is done
   both ways and timed, so the saving is an estimate from those samples, not
@@ -81,7 +82,8 @@ them in system memory.
 - `[Diagnostics] VariableLookupCheck=1` looks up every variable both ways,
   uses xOBSE's answer and logs any difference. Slow; only for checking.
 
-`OblivionFrameFixes.log` in the game folder says what the plugin did.
+`OblivionFrameFixes.log` in the game folder says what the plugin did; the
+game start before keeps its log as `OblivionFrameFixes.log.prev`.
 
 ## Heads up
 

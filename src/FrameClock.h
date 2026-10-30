@@ -14,5 +14,7 @@ using LogFn = void (*)(const char* format, ...);
 // every ten seconds reports the frame lengths the engine's own clock
 // produced and the lengths the frames were given.
 bool InstallFrameClock(bool trace, LogFn log);
+// The "Gains:" line now, out of turn (after a load, on quitting).
+void WriteFrameClockGainsNow();
 
 }  // namespace framefixes

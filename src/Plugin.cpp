@@ -19,6 +19,9 @@
 namespace {
 
 constexpr const char* kLogFile = "OblivionFrameFixes.log";
+// The last start's log, kept: the next start replaced it with its own, and
+// Nadi's run of 2026-10-29 lost its gains to a test start an hour later.
+constexpr const char* kPreviousLogFile = "OblivionFrameFixes.log.prev";
 constexpr const char* kIniFile = "OblivionFrameFixes.ini";
 
 HMODULE g_module = nullptr;
@@ -43,6 +46,7 @@ void Log(const char* format, ...) {
 
 void ResetLog() {
 	AcquireSRWLockExclusive(&g_logLock);
+	MoveFileExA(kLogFile, kPreviousLogFile, MOVEFILE_REPLACE_EXISTING);
 	if (FILE* file = std::fopen(kLogFile, "w")) {
 		std::fclose(file);
 	}
@@ -119,6 +123,50 @@ bool InstallCodeProtectSideEffect(bool check) {
 	return framefixes::InstallCodeProtect(check, &Log);
 }
 
+// xOBSE's interface past the head PluginEntry reads (obse/PluginAPI.h
+// OBSEInterface; QueryInterface since the first, GetPluginHandle since v0015)
+// and its messaging (kInterface_Messaging 4, since v0017).
+struct ExtenderInterface {
+	framefixes::ExtenderInterfaceHead head;
+	bool (*RegisterCommand)(void* info);
+	void (*SetOpcodeBase)(UInt32 opcode);
+	void* (*QueryInterface)(UInt32 id);
+	UInt32 (*GetPluginHandle)();
+};
+struct MessagingInterface {
+	struct Message {
+		const char* sender;
+		UInt32 type;
+		UInt32 dataLen;
+		void* data;
+	};
+	UInt32 version;
+	bool (*RegisterListener)(UInt32 listener, const char* sender, void (*handler)(Message* message));
+};
+constexpr UInt32 kInterfaceMessaging = 4;
+constexpr UInt32 kMessagingSinceObse = 17;
+
+const ExtenderInterface* g_xse = nullptr;
+
+void ReportGainsNow() {
+	framefixes::WriteFrameClockGainsNow();
+	framefixes::WriteStreamCopyGainsNow();
+	framefixes::WriteVarLookupGainsNow();
+	framefixes::WriteCodeProtectGainsNow();
+}
+
+void OnObseMessage(MessagingInterface::Message* message);
+
+bool ListenForGameMessages() {
+	if (g_xse == nullptr || g_xse->head.obseVersion < kMessagingSinceObse || g_xse->QueryInterface == nullptr ||
+	    g_xse->GetPluginHandle == nullptr) {
+		return false;
+	}
+	auto* messaging = static_cast<MessagingInterface*>(g_xse->QueryInterface(kInterfaceMessaging));
+	return messaging != nullptr && messaging->RegisterListener != nullptr &&
+	       messaging->RegisterListener(g_xse->GetPluginHandle(), "OBSE", &OnObseMessage);
+}
+
 const framefixes::Host kHost{&ResetLog,
                              &Log,
                              &ReadSettings,
@@ -127,7 +175,13 @@ const framefixes::Host kHost{&ResetLog,
                              &InstallVarLookupSideEffect,
                              &InstallEngineVarTraceSideEffect,
                              &InstallCastCacheSideEffect,
-                             &InstallCodeProtectSideEffect};
+                             &InstallCodeProtectSideEffect,
+                             &ListenForGameMessages,
+                             &ReportGainsNow};
+
+void OnObseMessage(MessagingInterface::Message* message) {
+	if (message != nullptr) framefixes::OnGameMessage(message->type, kHost);
+}
 
 }  // namespace
 
@@ -147,6 +201,7 @@ __declspec(dllexport) bool OBSEPlugin_Query(const framefixes::ExtenderInterfaceH
 }
 
 __declspec(dllexport) bool OBSEPlugin_Load(const framefixes::ExtenderInterfaceHead* xse) {
+	g_xse = reinterpret_cast<const ExtenderInterface*>(xse);
 	return framefixes::Load(*xse, kHost);
 }
 

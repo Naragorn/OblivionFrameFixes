@@ -49,6 +49,17 @@ void ReportLocked() {
 	      g_mismatches);
 }
 
+void WriteGainsLocked(long long now, long long frequency) {
+	char line[400];
+	if (FormatGain(line, sizeof(line), "Variable lookup", "lookups answered from an index", g_gains,
+	               g_cache->Stats().fromIndex, frequency, static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
+		g_log("%s", line);
+	}
+	for (UInt32 b = 0; b < kWalkBuckets; ++b) {
+		if (FormatBucket(line, sizeof(line), g_buckets, b, frequency)) g_log("%s", line);
+	}
+}
+
 EngineVar* __cdecl LookupVariable(const EngineEventList* list, UInt32 id) {
 	AcquireSRWLockExclusive(&g_lock);
 	// One lookup in 1024 answered from an index is also walked the old way,
@@ -69,17 +80,7 @@ EngineVar* __cdecl LookupVariable(const EngineEventList* list, UInt32 id) {
 		const long long now = GainsCounter();
 		if (g_gainsStart == 0) g_gainsStart = now;
 		const long long frequency = GainsFrequency();
-		if (g_gainsClock.Due(now, frequency, GainsPeriod())) {
-			char line[400];
-			if (FormatGain(line, sizeof(line), "Variable lookup", "lookups answered from an index", g_gains,
-			               g_cache->Stats().fromIndex, frequency,
-			               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
-				g_log("%s", line);
-			}
-			for (UInt32 b = 0; b < kWalkBuckets; ++b) {
-				if (FormatBucket(line, sizeof(line), g_buckets, b, frequency)) g_log("%s", line);
-			}
-		}
+		if (g_gainsClock.Due(now, frequency, GainsPeriod())) WriteGainsLocked(now, frequency);
 	}
 	if (g_check) {
 		EngineVar* walked = WalkVariables(*list, id, nullptr);
@@ -148,6 +149,16 @@ bool InstallFreeHook(LogFn log) {
 }
 
 }  // namespace
+
+void WriteVarLookupGainsNow() {
+	if (g_cache == nullptr || g_log == nullptr) return;
+	AcquireSRWLockExclusive(&g_lock);
+	const long long now = GainsCounter();
+	const long long frequency = GainsFrequency();
+	if (g_gainsStart != 0) WriteGainsLocked(now, frequency);
+	g_gainsClock.Restart(now, frequency, GainsPeriod());
+	ReleaseSRWLockExclusive(&g_lock);
+}
 
 bool InstallVarLookup(bool check, LogFn log) {
 	static bool s_done = false;

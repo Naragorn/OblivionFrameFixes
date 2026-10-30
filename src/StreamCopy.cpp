@@ -74,6 +74,14 @@ ReportClock g_gainsClock;
 long long g_gainsStart = 0;
 UInt64 g_copies = 0;
 
+void WriteGains(long long now, long long frequency) {
+	char line[400];
+	if (FormatGain(line, sizeof(line), "Stream copy", "vertex copies", g_gains, g_copies, frequency,
+	               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
+		g_log("%s", line);
+	}
+}
+
 // One copy in 1024 is also done the engine's way first, both timed (the same
 // bytes land twice; src/GainsLogic.h). The engine's copies run on the render
 // thread alone.
@@ -89,17 +97,21 @@ UInt32 __cdecl StreamCopyFastEntry(const StreamCopyDesc* desc) {
 	g_gains.Add(now - t1, t1 - t0);
 	if (g_gainsStart == 0) g_gainsStart = now;
 	const long long frequency = GainsFrequency();
-	if (g_gainsClock.Due(now, frequency, GainsPeriod())) {
-		char line[400];
-		if (FormatGain(line, sizeof(line), "Stream copy", "vertex copies", g_gains, g_copies, frequency,
-		               static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
-			g_log("%s", line);
-		}
-	}
+	if (g_gainsClock.Due(now, frequency, GainsPeriod())) WriteGains(now, frequency);
 	return total;
 }
 
 }  // namespace
+
+// The lines are read without the copies' thread stopped: should a copy run
+// on another thread meanwhile, one line may be a sample off - no more.
+void WriteStreamCopyGainsNow() {
+	if (g_log == nullptr || g_gainsStart == 0) return;
+	const long long now = GainsCounter();
+	const long long frequency = GainsFrequency();
+	WriteGains(now, frequency);
+	g_gainsClock.Restart(now, frequency, GainsPeriod());
+}
 
 bool InstallStreamCopy(bool check, LogFn log) {
 	static bool s_done = false;

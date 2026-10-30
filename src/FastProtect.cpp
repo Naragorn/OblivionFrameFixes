@@ -32,6 +32,14 @@ GainSampler g_gains;
 ReportClock g_gainsClock;
 long long g_gainsStart = 0;
 
+void WriteGainsLocked(long long now, long long frequency) {
+	char line[400];
+	if (FormatGain(line, sizeof(line), "Code protection", "calls answered without the system", g_gains, g_fast,
+	               frequency, static_cast<double>(now - g_gainsStart) / frequency / 60.0)) {
+		g_log("%s", line);
+	}
+}
+
 BOOL WINAPI FastVirtualProtect(LPVOID address, SIZE_T size, DWORD newProtect, PDWORD oldProtect) {
 	const UInt32 a = static_cast<UInt32>(reinterpret_cast<UINT_PTR>(address));
 	const UInt32 n = static_cast<UInt32>(size);
@@ -66,13 +74,7 @@ BOOL WINAPI FastVirtualProtect(LPVOID address, SIZE_T size, DWORD newProtect, PD
 			g_gains.Add(0, t1 - t0);
 			const long long frequency = GainsFrequency();
 			if (g_gainsStart == 0) g_gainsStart = t1;
-			if (g_gainsClock.Due(t1, frequency, GainsPeriod())) {
-				char line[400];
-				if (FormatGain(line, sizeof(line), "Code protection", "calls answered without the system", g_gains,
-				               g_fast, frequency, static_cast<double>(t1 - g_gainsStart) / frequency / 60.0)) {
-					g_log("%s", line);
-				}
-			}
+			if (g_gainsClock.Due(t1, frequency, GainsPeriod())) WriteGainsLocked(t1, frequency);
 		}
 		ReleaseSRWLockExclusive(&g_lock);
 		if (oldProtect != nullptr) *oldProtect = ReportedOld();
@@ -110,6 +112,16 @@ LONG CALLBACK OnFault(EXCEPTION_POINTERS* info) {
 }
 
 }  // namespace
+
+void WriteCodeProtectGainsNow() {
+	if (g_real == nullptr || g_log == nullptr) return;
+	AcquireSRWLockExclusive(&g_lock);
+	const long long now = GainsCounter();
+	const long long frequency = GainsFrequency();
+	if (g_gainsStart != 0) WriteGainsLocked(now, frequency);
+	g_gainsClock.Restart(now, frequency, GainsPeriod());
+	ReleaseSRWLockExclusive(&g_lock);
+}
 
 bool InstallCodeProtect(bool check, LogFn log) {
 	static bool s_done = false;

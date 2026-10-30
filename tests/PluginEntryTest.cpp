@@ -33,6 +33,9 @@ struct Fake {
 	int protectInstalls = 0;
 	bool protectCheck = false;
 	bool castCheck = false;
+	bool messagesHeard = true;  // xOBSE's messaging takes the listener
+	int listens = 0;
+	int gainsNow = 0;
 	std::vector<std::string> lines;
 
 	bool Logged(const char* text) const {
@@ -96,9 +99,16 @@ bool FakeInstallProtect(bool check) {
 	return true;
 }
 
+bool FakeListen() {
+	++g_fake->listens;
+	return g_fake->messagesHeard;
+}
+
+void FakeGainsNow() { ++g_fake->gainsNow; }
+
 const framefixes::Host kHost{&FakeReset, &FakeLog, &FakeReadSettings, &FakeInstallClock, &FakeInstallCopy,
                              &FakeInstallLookup, &FakeInstallTrace, &FakeInstallCast,
-                             &FakeInstallProtect};
+                             &FakeInstallProtect, &FakeListen, &FakeGainsNow};
 
 framefixes::ExtenderInterfaceHead Game() {
 	return framefixes::ExtenderInterfaceHead{22, framefixes::kOblivionVersion_1_2_416, 0, 0};
@@ -194,6 +204,47 @@ void TestLoadSettings() {
 	      "the event list cast stands on its own, without the variable lookup");
 }
 
+void TestGainsMoments() {
+	std::printf("The gains after a load and on quitting\n");
+	Fake fake;
+	g_fake = &fake;
+	framefixes::ResetForTest();
+	framefixes::Load(Game(), kHost);
+	Check(fake.listens == 1 && fake.Logged("also after each load and on quitting"),
+	      "ReportGains=1: listens to xOBSE's messages, said");
+	framefixes::OnGameMessage(framefixes::kObsePostLoadGame, kHost);
+	Check(fake.gainsNow == 1 && fake.Logged("Gains: written after a load"), "after a load: the lines, said why");
+	framefixes::OnGameMessage(framefixes::kObseExitGame, kHost);
+	Check(fake.gainsNow == 2 && fake.Logged("Gains: written on quitting"), "on quitting: the lines");
+	framefixes::OnGameMessage(4, kHost);
+	Check(fake.gainsNow == 2, "a save: nothing");
+
+	Fake deaf;
+	deaf.messagesHeard = false;
+	g_fake = &deaf;
+	framefixes::ResetForTest();
+	framefixes::Load(Game(), kHost);
+	Check(deaf.listens == 1 && deaf.Logged("no xOBSE messages") && deaf.Logged("every 300 s"),
+	      "xOBSE's messaging refused: only the period's lines, said");
+
+	Fake off;
+	off.iniSettings.reportGains = false;
+	g_fake = &off;
+	framefixes::ResetForTest();
+	framefixes::Load(Game(), kHost);
+	Check(off.listens == 0, "ReportGains=0: no listening");
+	framefixes::OnGameMessage(framefixes::kObsePostLoadGame, kHost);
+	Check(off.gainsNow == 0 && !off.Logged("Gains:"), "ReportGains=0: a load writes nothing");
+
+	Fake editor;
+	g_fake = &editor;
+	framefixes::ResetForTest();
+	framefixes::ExtenderInterfaceHead cs = Game();
+	cs.isEditor = 1;
+	framefixes::Load(cs, kHost);
+	Check(editor.listens == 0, "the editor: no listening");
+}
+
 void TestLoadRefusals() {
 	std::printf("Load where nothing is done\n");
 	Fake editor;
@@ -226,6 +277,7 @@ int main() {
 	TestLoadDefaults();
 	TestLoadSettings();
 	TestLoadRefusals();
+	TestGainsMoments();
 	if (g_failures != 0) {
 		std::printf("%d check(s) failed\n", g_failures);
 		return 1;

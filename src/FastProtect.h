@@ -14,5 +14,7 @@ using LogFn = void (*)(const char* format, ...);
 // check on, every answered call also asks the system what the page is, and
 // a page that is not writable is logged as MISMATCH and made writable.
 bool InstallCodeProtect(bool check, LogFn log);
+// The "Gains:" line now, out of turn (after a load, on quitting).
+void WriteCodeProtectGainsNow();
 
 }  // namespace framefixes

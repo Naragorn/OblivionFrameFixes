@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "GainsLogic.h"
+
 // What the plugin does when xOBSE queries and loads it - with the side
 // effects behind a Host so every flow runs in a test.
 
@@ -63,12 +65,20 @@ struct Host {
 	bool (*installEngineVarTrace)();
 	bool (*installCastCache)(bool check);
 	bool (*installCodeProtect)(bool check);
+	// Listens to xOBSE's messages (OnGameMessage); false if it cannot.
+	bool (*listenForGameMessages)();
+	// Every fix writes its "Gains:" lines now, out of turn.
+	void (*reportGainsNow)();
 };
 
 bool Query(const ExtenderInterfaceHead& xse, PluginInfo* info, const Host& host);
 // Makes the patches the settings ask for. Always true: refusing to load
 // would make nothing safer, and the log says what was skipped.
 bool Load(const ExtenderInterfaceHead& xse, const Host& host);
+
+// An xOBSE message: after a load and on quitting the fixes write their gains
+// (GainsMomentOf), when ReportGains is on.
+void OnGameMessage(uint32_t type, const Host& host);
 
 // The state Load left; exposed for tests.
 const Settings& LoadedSettings();

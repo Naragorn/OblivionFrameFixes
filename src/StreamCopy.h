@@ -15,5 +15,7 @@ using LogFn = void (*)(const char* format, ...);
 // compares the bytes and the counted total with the fast copy's - the proof
 // the two agree in the game; a difference is logged as MISMATCH.
 bool InstallStreamCopy(bool check, LogFn log);
+// The "Gains:" line now, out of turn (after a load, on quitting).
+void WriteStreamCopyGainsNow();
 
 }  // namespace framefixes

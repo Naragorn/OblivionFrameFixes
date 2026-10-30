@@ -18,5 +18,7 @@ using LogFn = void (*)(const char* format, ...);
 // walk's answer is used and a different answer from the cache is logged as
 // MISMATCH: the proof the two agree in the game.
 bool InstallVarLookup(bool check, LogFn log);
+// The "Gains:" lines now, out of turn (after a load, on quitting).
+void WriteVarLookupGainsNow();
 
 }  // namespace framefixes

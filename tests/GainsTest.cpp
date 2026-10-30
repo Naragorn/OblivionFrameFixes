@@ -139,6 +139,32 @@ void TestReportClock() {
 	Check(!r.Due(100 + 601, 10, 60.0), "and the next waits a period again");
 	ReportClock none;
 	Check(!none.Due(5, 0, 60.0) && !none.Due(1000000, 0, 60.0), "no counter frequency: never");
+
+	ReportClock early;
+	early.Due(100, 10, 60.0);
+	early.Restart(400, 10, 60.0);
+	Check(!early.Due(100 + 600, 10, 60.0), "written out of turn: the period's report waits");
+	Check(early.Due(400 + 600, 10, 60.0), "a whole period after the out-of-turn lines");
+	ReportClock fresh;
+	fresh.Restart(50, 10, 60.0);
+	Check(!fresh.Due(50 + 599, 10, 60.0) && fresh.Due(50 + 600, 10, 60.0),
+	      "out of turn before any reading: the clock starts there");
+	ReportClock noFrequency;
+	noFrequency.Restart(50, 0, 60.0);
+	Check(!noFrequency.started, "no counter frequency: no restart either");
+}
+
+void TestMoments() {
+	std::printf("When the lines are written besides the period\n");
+	Check(std::strcmp(GainsMomentOf(kObsePostLoadGame), "after a load") == 0, "after a load");
+	Check(std::strcmp(GainsMomentOf(kObseExitGame), "on quitting") == 0 &&
+	          std::strcmp(GainsMomentOf(kObseExitGameConsole), "on quitting") == 0,
+	      "on quitting, from the menu or the console's qqq");
+	Check(std::strcmp(GainsMomentOf(kObseExitToMainMenu), "on leaving for the main menu") == 0,
+	      "on leaving for the main menu");
+	Check(GainsMomentOf(0) == nullptr && GainsMomentOf(3) == nullptr && GainsMomentOf(4) == nullptr &&
+	          GainsMomentOf(6) == nullptr && GainsMomentOf(99) == nullptr,
+	      "no other message: xOBSE's post-load, the co-save's load, a save, the pre-load, unknown");
 }
 
 }  // namespace
@@ -150,6 +176,7 @@ int main() {
 	TestLines();
 	TestBuckets();
 	TestReportClock();
+	TestMoments();
 	if (g_failures != 0) {
 		std::printf("%d check(s) failed\n", g_failures);
 		return 1;

@@ -46,6 +46,14 @@ long long Counter() {
 	return value.QuadPart;
 }
 
+void WriteGains(long long now) {
+	char line[400];
+	if (FormatClockAccuracy(line, sizeof(line), g_accuracy,
+	                        static_cast<double>(now - g_gainsStart) / g_frequency / 60.0)) {
+		g_log("%s", line);
+	}
+}
+
 void __fastcall FrameClockUpdate(EngineTimeInfo* self, void* /*edx*/, UInt32 tick) {
 	g_original(self, nullptr, tick);
 	const float engineSeconds = self->frameSeconds;
@@ -60,13 +68,7 @@ void __fastcall FrameClockUpdate(EngineTimeInfo* self, void* /*edx*/, UInt32 tic
 			// its real length (src/GainsLogic.h).
 			g_accuracy.Add(engineSeconds, given);
 			if (g_gainsStart == 0) g_gainsStart = now;
-			if (g_gainsClock.Due(now, g_frequency, GainsPeriod())) {
-				char line[400];
-				if (FormatClockAccuracy(line, sizeof(line), g_accuracy,
-				                        static_cast<double>(now - g_gainsStart) / g_frequency / 60.0)) {
-					g_log("%s", line);
-				}
-			}
+			if (g_gainsClock.Due(now, g_frequency, GainsPeriod())) WriteGains(now);
 		}
 	}
 	// The previous reading moves only when a delta was taken from it, so a
@@ -91,6 +93,15 @@ void __fastcall FrameClockUpdate(EngineTimeInfo* self, void* /*edx*/, UInt32 tic
 }
 
 }  // namespace
+
+// The line is read without the clock's thread stopped: should a frame run on
+// another thread meanwhile, it may be a frame off - no more.
+void WriteFrameClockGainsNow() {
+	if (g_log == nullptr || g_gainsStart == 0 || g_frequency <= 0) return;
+	const long long now = Counter();
+	WriteGains(now);
+	g_gainsClock.Restart(now, g_frequency, GainsPeriod());
+}
 
 bool InstallFrameClock(bool trace, LogFn log) {
 	static bool s_done = false;

@@ -61,7 +61,22 @@ bool Load(const ExtenderInterfaceHead& xse, const Host& host) {
 	} else {
 		host.log("Code protection: xOBSE asks the system every time (FastCodeProtect=0)");
 	}
+	if (g_settings.reportGains) {
+		if (host.listenForGameMessages()) {
+			host.log("Gains: written every %.0f s, also after each load and on quitting", g_settings.gainsSeconds);
+		} else {
+			host.log("Gains: no xOBSE messages - written every %.0f s only", g_settings.gainsSeconds);
+		}
+	}
 	return true;
+}
+
+void OnGameMessage(uint32_t type, const Host& host) {
+	if (!g_settings.reportGains) return;
+	const char* moment = GainsMomentOf(type);
+	if (moment == nullptr) return;
+	host.log("Gains: written %s", moment);
+	host.reportGainsNow();
 }
 
 const Settings& LoadedSettings() {
