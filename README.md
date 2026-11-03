@@ -59,8 +59,9 @@ them in system memory.
 
 `OblivionFrameFixes.ini` next to the DLL:
 
-- `[Main] PreciseFrameClock=1`, `FastStreamCopy=1` and `FastVariableLookup=1`
-  turn the three fixes on; `0` leaves that part of the game as it is.
+- `[Main] PreciseFrameClock=1`, `FastStreamCopy=1`, `FastVariableLookup=1` and
+  `FastCodeProtect=1` turn the four fixes on; `0` leaves that part of the
+  game as it is.
 - `[Main] ReportGains=1` (the default) writes, every five minutes, after
   each load and when you quit, what each fix gained on your machine into the
   log: "Gains: Variable lookup - about
@@ -129,10 +130,14 @@ game start before keeps its log as `OblivionFrameFixes.log.prev`.
 32-bit MSVC, CMake 3.20+:
 
 ```
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release .
-cmake --build build
-ctest --test-dir build
+cmake -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release .
+cmake --build build-win
+ctest --test-dir build-win
 ```
+
+The release zip for Nexus: `tools/package-release.sh <version>` packs the
+MSVC DLL from `build-win/` (or the Linux one) with the INI, the license and
+this README into `dist/`. The Nexus page's text is `docs/nexus.md`.
 
 On Linux, `tools/build-linux.sh` builds the DLL with clang-cl against an xwin
 winsysroot (see `cmake/toolchain-linux-clang-cl.cmake`) and runs the tests
