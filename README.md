@@ -8,8 +8,8 @@ xOBSE plugin. Works flat and in VR.
    or 17, a 144 Hz frame of 6.94 ms as 6 or 7, so every animation and every
    moving thing speeds up and slows down by that much, frame by frame. On
    Windows the tick itself can step by 16 ms when nothing has raised the timer
-   resolution - the "64 Hz bug" Oblivion Stutter Remover and Oblivion Display
-   Tweaks fix in their way. This plugin gives the frame its real length from the
+   resolution - the "64 Hz bug" [Oblivion Stutter Remover](https://www.nexusmods.com/oblivion/mods/23208)
+   and [Oblivion Display Tweaks](https://www.nexusmods.com/oblivion/mods/50348) fix in their way. This plugin gives the frame its real length from the
    high resolution counter instead, inside the game's own clock code.
 2. **A faster vertex copy.** Every person in view is copied into the game's
    vertex buffers every frame, one memcpy call per vertex, 8 or 12 bytes each.
@@ -43,7 +43,7 @@ Needs [xOBSE](https://github.com/llde/xOBSE). Drop `OblivionFrameFixes.dll`
 and `OblivionFrameFixes.ini` into `Data\OBSE\Plugins\`. To remove it, delete
 them.
 
-If you use DXVK, one more line in your `dxvk.conf` next to `Oblivion.exe`
+If you use [DXVK](https://github.com/doitsujin/dxvk), one more line in your `dxvk.conf` next to `Oblivion.exe`
 helps on top:
 
 ```
@@ -115,8 +115,8 @@ game start before keeps its log as `OblivionFrameFixes.log.prev`.
   5.06 ms, the copy itself from about 1.2 to 0.7 ms. The Windows tick is
   still to be measured; `FrameClockTrace=1` shows it on your machine.
   Display Tweaks was loaded in the test game throughout, without a conflict.
-- The variable lookup, measured 2026-10-25 under Proton with Maskar's
-  Oblivion Overhaul, leaving a house and walking onto new ground, everything
+- The variable lookup, measured 2026-10-25 under Proton with [Maskar's
+  Oblivion Overhaul](https://www.nexusmods.com/oblivion/mods/42780), leaving a house and walking onto new ground, everything
   else the same: MOO's world event build on leaving the house 127.6 ms
   without the fix, 30.4 ms with it; the longest frame there 164 ms without,
   76 ms with (and those 76 ms are the first draw of the new view, not the
